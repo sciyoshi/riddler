@@ -6,6 +6,7 @@ import attr
 import copy
 import click
 import itertools
+from fractions import Fraction
 from collections import Counter
 
 def splits(l):
@@ -14,6 +15,21 @@ def splits(l):
 	"""
 	for s in itertools.product(*([(k, c) for c in range(v + 1)] for k, v in l.items())):
 		yield Counter(dict(s))
+
+sups = dict(zip('0123456789', '⁰¹²³⁴⁵⁶⁷⁸⁹'))
+subs = dict(zip('0123456789', '₀₁₂₃₄₅₆₇₈₉'))
+
+def improper(f):
+	"""
+	Formats a `Fraction` as an improper fraction.
+	"""
+	base = int(f)
+	frac = f - base
+
+	num = ''.join(sups.get(c, c) for c in str(frac.numerator))
+	den = ''.join(subs.get(c, c) for c in str(frac.denominator))
+
+	return str(base or '') + (f'{num}\u2044{den}' if frac else '')
 
 @attr.s
 class State:
@@ -61,7 +77,7 @@ class State:
 				yield from item.expand()
 
 def possible_times(ropes):
-	initial = State(full=Counter(), half=Counter(), left=Counter({60: ropes}), time=0)
+	initial = State(full=Counter(), half=Counter(), left=Counter({Fraction(60, 1): ropes}), time=0)
 
 	return list(sorted(set(initial.expand())))
 
@@ -75,7 +91,7 @@ def ropes(count):
 		result = possible_times(count)
 
 		print(f'{count} ropes: {len(result)} times')
-		print(result)
+		print(', '.join(improper(time) for time in result))
 
 if __name__ == '__main__':
 	ropes()
